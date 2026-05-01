@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="记账本">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="format-detection" content="telephone=no">
+<title>记账本 · Bookkeeping</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230a0a0a'/><text x='90' y='128' font-family='serif' font-size='110' font-weight='400' fill='%23d4af37' text-anchor='middle'>记</text></svg>">
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"记账本 Bookkeeping","short_name":"记账本","start_url":".","display":"standalone","background_color":"%230a0a0a","theme_color":"%230a0a0a","orientation":"portrait","icons":[{"src":"data:image/svg%2Bxml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27><rect width=%27192%27 height=%27192%27 rx=%2742%27 fill=%27%230a0a0a%27/><text x=%2796%27 y=%27138%27 font-family=%27serif%27 font-size=%27120%27 font-weight=%27400%27 fill=%27%23d4af37%27 text-anchor=%27middle%27>记</text></svg>","sizes":"192x192","type":"image/svg+xml"},{"src":"data:image/svg%2Bxml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27><rect width=%27512%27 height=%27512%27 rx=%27112%27 fill=%27%230a0a0a%27/><text x=%27256%27 y=%27370%27 font-family=%27serif%27 font-size=%27320%27 font-weight=%27400%27 fill=%27%23d4af37%27 text-anchor=%27middle%27>记</text></svg>","sizes":"512x512","type":"image/svg+xml"}]}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #161616;
+  --surface-2: #1f1f1f;
+  --line: rgba(255,255,255,0.08);
+  --line-2: rgba(255,255,255,0.16);
+  --text: #f5f5f0;
+  --text-2: #a8a8a0;
+  --text-3: #6c6c66;
+  --gold: #d4af37;
+  --gold-soft: #b8961f;
+  --rose: #c45e60;
+  --green: #6b9b76;
+  --warn: #d4a45e;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0; min-height: 100vh; min-height: 100dvh;
+  background: var(--bg); color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+}
+body {
+  padding-top: var(--safe-top);
+  padding-bottom: calc(72px + var(--safe-bottom));
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Header */
+.hdr {
+  padding: 20px 20px 8px;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.hdr-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.hdr-title .accent { color: var(--gold); font-style: italic; }
+.hdr-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Page */
+.page { padding: 8px 20px 20px; display: none; }
+.page.active { display: block; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Sections */
+.section-title {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 24px 0 10px;
+  font-weight: 500;
+}
+.section-title:first-child { margin-top: 8px; }
+
+/* Amount input */
+.amt-wrap {
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.amt-label {
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 8px;
+}
+.amt-input {
+  width: 100%;
+  font-family: 'Fraunces', serif;
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+  caret-color: var(--gold);
+}
+.amt-input::placeholder { color: var(--text-3); font-style: italic; }
+.amt-input::-webkit-outer-spin-button,
+.amt-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.amt-prefix {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  color: var(--gold);
+  margin-right: 4px;
+  vertical-align: super;
+  position: relative;
+  top: -10px;
+}
+
+/* Type toggle */
+.type-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.type-btn {
+  background: transparent; border: none; padding: 12px 8px;
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  color: var(--text-3); cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.type-btn.active[data-type="expense"] { background: rgba(196,94,96,0.15); color: var(--rose); }
+.type-btn.active[data-type="income"] { background: rgba(107,155,118,0.15); color: var(--green); }
+
+/* Company/Category grid */
+.chip-grid {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+}
+.chip {
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip.active {
+  background: var(--gold);
+  color: #0a0a0a;
+  border-color: var(--gold);
+}
+
+/* Form rows */
+.form-row {
+  display: grid; grid-template-columns: 100px 1fr; gap: 12px;
+  align-items: center; padding: 14px 0;
+  border-bottom: 0.5px solid var(--line);
+}
+.form-label {
+  font-size: 13px; color: var(--text-2); letter-spacing: 0.02em;
+}
+.form-input, .form-select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit; font-size: 15px;
+  outline: none;
+  padding: 0;
+  width: 100%;
+  text-align: right;
+}
+.form-select {
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%236c6c66' stroke-width='1.2' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right center;
+  padding-right: 16px;
+  cursor: pointer;
+}
+.form-select option { background: var(--surface); color: var(--text); }
+.form-input::placeholder { color: var(--text-3); }
+.form-input[type="date"] { color-scheme: dark; }
+
+/* Save button */
+.save-btn {
+  display: block; width: 100%;
+  padding: 16px;
+  background: var(--gold);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-top: 24px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.save-btn:active { transform: scale(0.98); background: var(--gold-soft); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: calc(80px + var(--safe-bottom));
+  left: 50%; transform: translateX(-50%);
+  background: var(--surface-2);
+  border: 0.5px solid var(--line-2);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 100;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.toast.show { opacity: 1; }
+.toast.success { color: var(--green); border-color: rgba(107,155,118,0.3); }
+.toast.error { color: var(--rose); border-color: rgba(196,94,96,0.3); }
+
+/* List */
+.list-day {
+  margin-top: 24px;
+}
+.list-day-hdr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0 0 10px;
+  border-bottom: 0.5px solid var(--line);
+  margin-bottom: 4px;
+}
+.list-day-date {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  color: var(--text);
+}
+.list-day-total {
+  font-size: 12px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.entry {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--line);
+}
+.entry-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: var(--text-2);
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.entry-icon.exp { background: rgba(196,94,96,0.12); color: var(--rose); }
+.entry-icon.inc { background: rgba(107,155,118,0.12); color: var(--green); }
+.entry-body { flex: 1; min-width: 0; }
+.entry-title {
+  font-size: 14px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.entry-meta {
+  font-size: 11px; color: var(--text-3); margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+.entry-amount {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+.entry-amount.exp { color: var(--text); }
+.entry-amount.inc { color: var(--green); }
+
+/* Summary cards */
+.sum-card {
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.sum-card.hero {
+  background: linear-gradient(160deg, #1a1612 0%, #0f0e0c 100%);
+  border-color: rgba(212,175,55,0.2);
+}
+.sum-co-name {
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 8px;
+}
+.sum-net {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.sum-net.pos { color: var(--green); }
+.sum-net.neg { color: var(--text); }
+.sum-net .currency { font-size: 18px; color: var(--text-3); margin-right: 4px; }
+.sum-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.sum-divider {
+  height: 0.5px; background: var(--line); margin: 12px 0;
+}
+.sum-cat {
+  display: flex; justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.sum-cat-name { color: var(--text-2); }
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-3);
+}
+.empty-icon {
+  font-family: 'Fraunces', serif;
+  font-size: 48px;
+  color: var(--gold);
+  opacity: 0.4;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+.empty-text { font-size: 14px; }
+
+/* Bottom nav */
+.bnav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,10,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--line);
+  padding: 8px 0 var(--safe-bottom);
+  z-index: 50;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.bnav-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  height: 60px;
+}
+.bnav-btn {
+  background: none; border: none;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  transition: color 0.15s;
+}
+.bnav-btn.active { color: var(--gold); }
+.bnav-icon {
+  width: 22px; height: 22px;
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 4px 0 12px;
+  scrollbar-width: none;
+  margin-bottom: 4px;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+.filter-chip {
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.filter-chip.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* Action buttons */
+.actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-top: 16px;
+}
+.action-btn {
+  padding: 12px;
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 10px;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn:active { background: var(--surface-2); }
+.action-btn.danger { color: var(--rose); border-color: rgba(196,94,96,0.2); }
+
+/* Detail modal */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  animation: fadeIn 0.2s;
+}
+.modal.show { display: flex; }
+.modal-card {
+  background: var(--surface);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px 20px calc(20px + var(--safe-bottom));
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  animation: slideUp 0.25s;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+.modal-title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  margin: 0 0 16px;
+  color: var(--text);
+}
+.modal-amount {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  margin: 8px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.modal-meta {
+  font-size: 13px; color: var(--text-2); margin-bottom: 4px;
+}
+.modal-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-top: 20px;
+}
+
+/* Period selector */
+.period-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.period-btn {
+  background: transparent; border: none;
+  padding: 10px 6px;
+  font-family: inherit; font-size: 13px;
+  color: var(--text-3);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+.period-btn.active {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Settings */
+.set-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 0;
+  border-bottom: 0.5px solid var(--line);
+  cursor: pointer;
+}
+.set-label {
+  font-size: 14px; color: var(--text);
+}
+.set-desc {
+  font-size: 11px; color: var(--text-3); margin-top: 2px;
+}
+.set-arrow { color: var(--text-3); }
+
+/* Stat strip */
+.stat-strip {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 16px;
+}
+.stat-cell {
+  background: var(--surface);
+  border: 0.5px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.stat-cell-label {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-3);
+}
+.stat-cell-value {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hidden file input */
+.file-input { display: none; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">记<span class="accent">账</span> <span class="accent" style="font-size:18px;">·</span> Ledger</div>
+    <div class="hdr-sub" id="hdr-sub">Today</div>
+  </div>
+</div>
+
+<!-- ADD PAGE -->
+<div class="page active" id="page-add">
+  <div class="amt-wrap">
+    <div class="amt-label">Amount · 金额</div>
+    <div style="display:flex;align-items:flex-end;">
+      <span class="amt-prefix">$</span>
+      <input type="number" class="amt-input" id="amt" placeholder="0.00" step="0.01" inputmode="decimal" />
+    </div>
+  </div>
+
+  <div class="type-row">
+    <button class="type-btn active" data-type="expense">支出 · Expense</button>
+    <button class="type-btn" data-type="income">收入 · Income</button>
+  </div>
+
+  <div class="section-title">Company · 公司</div>
+  <div class="chip-grid" id="co-chips"></div>
+
+  <div class="section-title">Category · 类别</div>
+  <div class="chip-grid" id="cat-chips"></div>
+
+  <div class="section-title">Details · 详情</div>
+  <div class="form-row">
+    <div class="form-label">Date 日期</div>
+    <input type="date" class="form-input" id="date" />
+  </div>
+  <div class="form-row">
+    <div class="form-label">Note 备注</div>
+    <input type="text" class="form-input" id="note" placeholder="可选 optional" />
+  </div>
+
+  <button class="save-btn" id="save">Save 保存</button>
+
+  <div class="section-title" id="recent-title" style="display:none;">Recent · 最近</div>
+  <div id="recent-list"></div>
+</div>
+
+<!-- LIST PAGE -->
+<div class="page" id="page-list">
+  <div class="filter-bar" id="filter-bar"></div>
+  <div id="list-content"></div>
+</div>
+
+<!-- SUMMARY PAGE -->
+<div class="page" id="page-sum">
+  <div class="period-row">
+    <button class="period-btn active" data-period="month">本月 Month</button>
+    <button class="period-btn" data-period="year">今年 Year</button>
+    <button class="period-btn" data-period="all">全部 All</button>
+  </div>
+  <div id="sum-content"></div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-set">
+  <div class="section-title">Backup · 备份</div>
+  <div class="set-item" id="export-csv">
+    <div>
+      <div class="set-label">导出 CSV</div>
+      <div class="set-desc">Export for accountant / tax filing</div>
+    </div>
+    <div class="set-arrow">›</div>
+  </div>
+  <div class="set-item" id="export-json">
+    <div>
+      <div class="set-label">导出 JSON 备份</div>
+      <div class="set-desc">Full backup with all data</div>
+    </div>
+    <div class="set-arrow">›</div>
+  </div>
+  <div class="set-item" id="import-json">
+    <div>
+      <div class="set-label">导入 JSON 备份</div>
+      <div class="set-desc">Restore from backup file</div>
+    </div>
+    <div class="set-arrow">›</div>
+  </div>
+  <input type="file" class="file-input" id="json-file" accept="application/json" />
+
+  <div class="section-title">About · 关于</div>
+  <div class="set-item">
+    <div>
+      <div class="set-label">数据存储</div>
+      <div class="set-desc" id="storage-info">Loading...</div>
+    </div>
+  </div>
+  <div class="set-item" id="install-hint">
+    <div>
+      <div class="set-label">添加到主屏幕</div>
+      <div class="set-desc">iOS: 分享 → 添加到主屏幕<br>Android: 菜单 → 安装应用</div>
+    </div>
+  </div>
+
+  <div class="section-title" style="color:var(--rose);">Danger Zone</div>
+  <div class="set-item" id="clear-all">
+    <div>
+      <div class="set-label" style="color:var(--rose);">清空所有数据</div>
+      <div class="set-desc">Delete everything (irreversible)</div>
+    </div>
+    <div class="set-arrow" style="color:var(--rose);">›</div>
+  </div>
+
+  <div style="margin-top:40px;text-align:center;color:var(--text-3);font-size:11px;letter-spacing:0.1em;">
+    Bookkeeping · v1.0<br>For ALT Hollywood / HGL / GFA
+  </div>
+</div>
+
+<!-- Modal for entry detail -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-title" id="modal-title">Entry</div>
+    <div class="modal-amount" id="modal-amt">—</div>
+    <div class="modal-meta" id="modal-co">—</div>
+    <div class="modal-meta" id="modal-cat">—</div>
+    <div class="modal-meta" id="modal-date">—</div>
+    <div class="modal-meta" id="modal-note" style="margin-top:12px;color:var(--text);"></div>
+    <div class="modal-actions">
+      <button class="action-btn danger" id="modal-del">删除 Delete</button>
+      <button class="action-btn" id="modal-close">关闭 Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="bnav">
+  <div class="bnav-row">
+    <button class="bnav-btn active" data-page="add">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
+      添加
+    </button>
+    <button class="bnav-btn" data-page="list">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      记录
+    </button>
+    <button class="bnav-btn" data-page="sum">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 20V10M9 20V4M15 20v-7M21 20V8"/></svg>
+      汇总
+    </button>
+    <button class="bnav-btn" data-page="set">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      设置
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COMPANIES = [
+  { id: 'alt', name: 'ALT Hollywood' },
+  { id: 'hgl', name: '金狮 HGL' },
+  { id: 'gfa', name: 'GFA 501(c)(3)' },
+  { id: 'personal', name: '个人 Personal' }
+];
+const CATS = {
+  expense: [
+    { id: 'meals', name: '餐饮 Meals' },
+    { id: 'travel', name: '差旅 Travel' },
+    { id: 'fuel', name: '油费 Fuel' },
+    { id: 'equipment', name: '设备 Equipment' },
+    { id: 'software', name: '软件 Software' },
+    { id: 'supplies', name: '办公用品 Supplies' },
+    { id: 'contractors', name: '外包人工 Contractors' },
+    { id: 'marketing', name: '营销 Marketing' },
+    { id: 'rent', name: '租金 Rent' },
+    { id: 'utilities', name: '水电网 Utilities' },
+    { id: 'insurance', name: '保险 Insurance' },
+    { id: 'legal', name: '法律 Legal' },
+    { id: 'production', name: '制作费 Production' },
+    { id: 'other', name: '其他 Other' }
+  ],
+  income: [
+    { id: 'service', name: '服务收入 Service' },
+    { id: 'project', name: '项目收入 Project' },
+    { id: 'donation', name: '捐赠 Donation' },
+    { id: 'other', name: '其他 Other' }
+  ]
+};
+
+const STORAGE_KEY = 'jacky_bookkeeping_v1';
+let entries = [];
+let state = { type: 'expense', company: 'alt', category: 'meals', period: 'month', filter: 'all' };
+
+// --- Storage
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    entries = raw ? JSON.parse(raw) : [];
+  } catch (e) { entries = []; }
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); return true; }
+  catch (e) { return false; }
+}
+
+// --- Helpers
+const fmt = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const coName = id => (COMPANIES.find(c => c.id === id) || { name: id }).name;
+const catName = (id, type) => (CATS[type] || []).find(c => c.id === id)?.name || id;
+const todayStr = () => {
+  const d = new Date(); const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+};
+const formatDate = s => {
+  const d = new Date(s + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+};
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 1800);
+}
+
+// --- Render chips
+function renderCompanyChips() {
+  const wrap = document.getElementById('co-chips');
+  wrap.innerHTML = '';
+  COMPANIES.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (c.id === state.company ? ' active' : '');
+    b.textContent = c.name;
+    b.onclick = () => { state.company = c.id; renderCompanyChips(); };
+    wrap.appendChild(b);
+  });
+}
+function renderCatChips() {
+  const wrap = document.getElementById('cat-chips');
+  wrap.innerHTML = '';
+  const cats = CATS[state.type] || [];
+  if (!cats.find(c => c.id === state.category)) state.category = cats[0]?.id;
+  cats.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (c.id === state.category ? ' active' : '');
+    b.textContent = c.name;
+    b.onclick = () => { state.category = c.id; renderCatChips(); };
+    wrap.appendChild(b);
+  });
+}
+
+// --- Type toggle
+document.querySelectorAll('.type-btn').forEach(b => {
+  b.onclick = () => {
+    state.type = b.dataset.type;
+    document.querySelectorAll('.type-btn').forEach(x => x.classList.toggle('active', x === b));
+    renderCatChips();
+  };
+});
+
+// --- Save
+document.getElementById('save').onclick = () => {
+  const amt = parseFloat(document.getElementById('amt').value);
+  if (!amt || amt <= 0) { toast('请输入金额 Enter amount', 'error'); return; }
+  const date = document.getElementById('date').value || todayStr();
+  const note = document.getElementById('note').value.trim();
+  const e = {
+    id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    date, type: state.type, company: state.company,
+    category: state.category, amount: amt, note,
+    createdAt: Date.now()
+  };
+  entries.unshift(e);
+  if (save()) {
+    toast('✓ 已保存 Saved');
+    document.getElementById('amt').value = '';
+    document.getElementById('note').value = '';
+    document.getElementById('date').value = todayStr();
+    renderRecent();
+  } else {
+    toast('保存失败 Save failed', 'error');
+    entries.shift();
+  }
+};
+
+// --- Recent on add page
+function renderRecent() {
+  const list = document.getElementById('recent-list');
+  const title = document.getElementById('recent-title');
+  if (entries.length === 0) {
+    title.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+  title.style.display = 'block';
+  const recent = entries.slice(0, 5);
+  list.innerHTML = recent.map(e => entryHtml(e)).join('');
+  bindEntries(list);
+}
+
+function entryHtml(e) {
+  const sym = e.type === 'expense' ? '−' : '+';
+  return `
+    <div class="entry" data-id="${e.id}">
+      <div class="entry-icon ${e.type === 'expense' ? 'exp' : 'inc'}">${e.type === 'expense' ? '−' : '+'}</div>
+      <div class="entry-body">
+        <div class="entry-title">${escapeHtml(catName(e.category, e.type))}${e.note ? ' · ' + escapeHtml(e.note) : ''}</div>
+        <div class="entry-meta">${escapeHtml(coName(e.company))}</div>
+      </div>
+      <div class="entry-amount ${e.type === 'expense' ? 'exp' : 'inc'}">${sym}$${fmt(e.amount)}</div>
+    </div>`;
+}
+
+function bindEntries(parent) {
+  parent.querySelectorAll('.entry').forEach(el => {
+    el.onclick = () => openModal(el.dataset.id);
+  });
+}
+
+// --- Modal
+function openModal(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('modal-title').textContent = e.type === 'expense' ? '支出 Expense' : '收入 Income';
+  document.getElementById('modal-amt').textContent = (e.type === 'expense' ? '−' : '+') + '$' + fmt(e.amount);
+  document.getElementById('modal-amt').style.color = e.type === 'expense' ? 'var(--text)' : 'var(--green)';
+  document.getElementById('modal-co').textContent = coName(e.company);
+  document.getElementById('modal-cat').textContent = catName(e.category, e.type);
+  document.getElementById('modal-date').textContent = e.date;
+  document.getElementById('modal-note').textContent = e.note || '';
+  document.getElementById('modal-del').onclick = () => {
+    if (!confirm('删除此条? Delete this entry?')) return;
+    entries = entries.filter(x => x.id !== id);
+    save();
+    closeModal();
+    renderRecent(); renderList(); renderSummary();
+    toast('已删除 Deleted');
+  };
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal-close').onclick = closeModal;
+document.getElementById('modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+
+// --- List page
+function renderFilterBar() {
+  const bar = document.getElementById('filter-bar');
+  bar.innerHTML = '';
+  const all = [{ id: 'all', name: '全部 All' }].concat(COMPANIES);
+  all.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'filter-chip' + (c.id === state.filter ? ' active' : '');
+    b.textContent = c.name;
+    b.onclick = () => { state.filter = c.id; renderFilterBar(); renderList(); };
+    bar.appendChild(b);
+  });
+}
+
+function renderList() {
+  const wrap = document.getElementById('list-content');
+  const filtered = entries.filter(e => state.filter === 'all' || e.company === state.filter);
+  if (filtered.length === 0) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">∅</div><div class="empty-text">还没有记录<br>No entries yet</div></div>';
+    return;
+  }
+  const byDay = {};
+  filtered.forEach(e => { (byDay[e.date] ||= []).push(e); });
+  const dates = Object.keys(byDay).sort().reverse();
+  let html = '';
+  dates.forEach(date => {
+    const dayEntries = byDay[date];
+    const dayExp = dayEntries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+    const dayInc = dayEntries.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+    const net = dayInc - dayExp;
+    html += `
+      <div class="list-day">
+        <div class="list-day-hdr">
+          <div class="list-day-date">${formatDate(date)}</div>
+          <div class="list-day-total">${net >= 0 ? '+' : '−'}$${fmt(Math.abs(net))}</div>
+        </div>
+        ${dayEntries.map(entryHtml).join('')}
+      </div>`;
+  });
+  wrap.innerHTML = html;
+  bindEntries(wrap);
+}
+
+// --- Summary page
+function renderSummary() {
+  const wrap = document.getElementById('sum-content');
+  const now = new Date();
+  let arr = entries;
+  if (state.period === 'month') {
+    const ym = todayStr().slice(0, 7);
+    arr = entries.filter(e => e.date.startsWith(ym));
+  } else if (state.period === 'year') {
+    const y = String(now.getFullYear());
+    arr = entries.filter(e => e.date.startsWith(y));
+  }
+  if (arr.length === 0) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">∅</div><div class="empty-text">此期间没有记录<br>No entries</div></div>';
+    return;
+  }
+  const totalExp = arr.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+  const totalInc = arr.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+  const net = totalInc - totalExp;
+
+  let html = `
+    <div class="sum-card hero">
+      <div class="sum-co-name">Total · 总计</div>
+      <div class="sum-net ${net >= 0 ? 'pos' : 'neg'}"><span class="currency">$</span>${fmt(Math.abs(net))}</div>
+      <div style="margin-top:12px;">
+        <div class="sum-row"><span>总收入 Income</span><span style="color:var(--green);">+$${fmt(totalInc)}</span></div>
+        <div class="sum-row"><span>总支出 Expense</span><span>−$${fmt(totalExp)}</span></div>
+      </div>
+    </div>`;
+
+  COMPANIES.forEach(co => {
+    const ce = arr.filter(e => e.company === co.id);
+    if (ce.length === 0) return;
+    const exp = ce.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
+    const inc = ce.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+    const cnet = inc - exp;
+    const cats = {};
+    ce.filter(e => e.type === 'expense').forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+    const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+    html += `
+      <div class="sum-card">
+        <div class="sum-co-name">${escapeHtml(co.name)} · ${ce.length} entries</div>
+        <div class="sum-net ${cnet >= 0 ? 'pos' : 'neg'}"><span class="currency">$</span>${fmt(Math.abs(cnet))}</div>
+        <div style="margin-top:12px;">
+          <div class="sum-row"><span>收入 Income</span><span style="color:var(--green);">+$${fmt(inc)}</span></div>
+          <div class="sum-row"><span>支出 Expense</span><span>−$${fmt(exp)}</span></div>
+        </div>
+        ${sorted.length ? '<div class="sum-divider"></div>' : ''}
+        ${sorted.map(([c, a]) => `<div class="sum-cat"><span class="sum-cat-name">${escapeHtml(catName(c, 'expense'))}</span><span>$${fmt(a)}</span></div>`).join('')}
+      </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+document.querySelectorAll('.period-btn').forEach(b => {
+  b.onclick = () => {
+    state.period = b.dataset.period;
+    document.querySelectorAll('.period-btn').forEach(x => x.classList.toggle('active', x === b));
+    renderSummary();
+  };
+});
+
+// --- Settings: Export CSV
+document.getElementById('export-csv').onclick = () => {
+  if (entries.length === 0) { toast('没有数据 No data', 'error'); return; }
+  const headers = ['Date', 'Type', 'Company', 'Category', 'Amount(USD)', 'Note'];
+  const rows = entries.slice().reverse().map(e => [
+    e.date, e.type,
+    coName(e.company).replace(/,/g, ''),
+    catName(e.category, e.type).replace(/,/g, ''),
+    e.amount.toFixed(2),
+    (e.note || '').replace(/[",\n]/g, ' ')
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  download('\uFEFF' + csv, 'bookkeeping_' + todayStr() + '.csv', 'text/csv;charset=utf-8');
+  toast('已导出 Exported');
+};
+
+// --- Settings: Export JSON
+document.getElementById('export-json').onclick = () => {
+  if (entries.length === 0) { toast('没有数据 No data', 'error'); return; }
+  const data = { version: 1, exported: new Date().toISOString(), entries };
+  download(JSON.stringify(data, null, 2), 'bookkeeping_backup_' + todayStr() + '.json', 'application/json');
+  toast('已备份 Backed up');
+};
+
+// --- Settings: Import JSON
+document.getElementById('import-json').onclick = () => document.getElementById('json-file').click();
+document.getElementById('json-file').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      const imp = Array.isArray(data) ? data : data.entries;
+      if (!Array.isArray(imp)) throw new Error('Invalid format');
+      if (!confirm(`将导入 ${imp.length} 条记录,合并到现有数据? Import ${imp.length} entries (merged)?`)) return;
+      const existingIds = new Set(entries.map(x => x.id));
+      const newOnes = imp.filter(x => x.id && !existingIds.has(x.id));
+      entries = newOnes.concat(entries);
+      entries.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      save();
+      renderRecent(); renderList(); renderSummary();
+      toast(`✓ 已导入 ${newOnes.length} 条 / Imported`);
+    } catch (err) {
+      toast('导入失败 Import failed', 'error');
+    }
+    e.target.value = '';
+  };
+  r.readAsText(f);
+};
+
+document.getElementById('clear-all').onclick = () => {
+  if (!confirm('确定清空所有数据? 此操作不可撤销!\nClear ALL data? Cannot undo!')) return;
+  if (!confirm('再次确认: 真的要删除全部记录吗?\nReally delete everything?')) return;
+  entries = [];
+  save();
+  renderRecent(); renderList(); renderSummary();
+  toast('已清空 Cleared');
+};
+
+function download(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+// --- Bottom nav
+document.querySelectorAll('.bnav-btn').forEach(b => {
+  b.onclick = () => {
+    const target = b.dataset.page;
+    document.querySelectorAll('.bnav-btn').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + target));
+    if (target === 'list') { renderFilterBar(); renderList(); }
+    if (target === 'sum') renderSummary();
+    document.getElementById('hdr-sub').textContent = {
+      add: 'Today', list: 'History', sum: 'Summary', set: 'Settings'
+    }[target];
+    window.scrollTo(0, 0);
+  };
+});
+
+// --- Init
+load();
+document.getElementById('date').value = todayStr();
+renderCompanyChips();
+renderCatChips();
+renderRecent();
+
+// Storage info
+try {
+  const used = (localStorage.getItem(STORAGE_KEY) || '').length;
+  document.getElementById('storage-info').textContent =
+    `${entries.length} 条记录 entries · ${(used / 1024).toFixed(1)} KB · 本地浏览器存储`;
+} catch (e) {
+  document.getElementById('storage-info').textContent = '存储不可用 Storage unavailable';
+}
+
+// Prevent zoom on double-tap iOS
+let lastTouch = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - lastTouch < 300) e.preventDefault();
+  lastTouch = now;
+}, { passive: false });
+</script>
+</body>
+</html>
